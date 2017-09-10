@@ -2,18 +2,15 @@ package MenuManager;
 use strict;
 use warnings;
 
-require Carp;
-
+use Carp qw(croak);
 
 sub new
 {
     my $class = shift;
     my (%config) = @_;
 
-    my $self = {};
+    my $self = { menu => [] };
     bless $self, $class;
-
-    $self->{menu} = [];
 
     return $self;
 }
@@ -26,7 +23,9 @@ sub addMenu
     while (@menu) {
         my $root    = shift @menu;
         my $submenu = shift @menu;
-        push(@{$self->{menu}}, $root, $submenu);
+
+        next unless $root && $submenu;
+        push @{$self->{menu}}, { title => $root, submenu => $submenu };
     }
 
     return 1;
@@ -61,20 +60,20 @@ sub _addMenuInPosition
     my @new;
 
     my $added = 0;
-    for (my $i = 0; $i < @old; $i+=2) {
-        my $title = $old[$i];
-        my $menus = $old[$i+1];
+    foreach my $m (@old) {
+        push(@new, $m) if $type eq 'after';
 
-        push(@new, $title, $menus) if $type eq 'after';
-
-        if ($title eq $anchor) {
-            push(@new, @menu);
+        if ($m->{title} eq $anchor) {
             $added = 1;
+            while (@menu) {
+                push(@new, { title => shift @menu, submenu => shift @menu });
+            }
         }
 
-        push(@new, $title, $menus) if $type eq 'before';
+        push(@new, $m) if $type eq 'before';
     }
-    Carp::croak("Anchor menu not found") unless $added;
+
+    croak("Anchor menu not found") unless $added;
 
     $self->{menu} = \@new;
 
@@ -86,9 +85,7 @@ sub addSubmenuBefore
     my $self = shift;
     my ($anchor, $subanchor, @new_submenu) = @_;
 
-    $self->_addSubmenuInPosition('before', $anchor, $subanchor, @new_submenu);
-
-    return 1;
+    return $self->_addSubmenuInPosition('before', $anchor, $subanchor, @new_submenu);
 }
 
 sub addSubmenuAfter
@@ -96,9 +93,7 @@ sub addSubmenuAfter
     my $self = shift;
     my ($anchor, $subanchor, @new_submenu) = @_;
 
-    $self->_addSubmenuInPosition('after', $anchor, $subanchor, @new_submenu);
-
-    return 1;
+    return $self->_addSubmenuInPosition('after', $anchor, $subanchor, @new_submenu);
 }
 
 sub _addSubmenuInPosition
@@ -106,46 +101,39 @@ sub _addSubmenuInPosition
     my $self = shift;
     my ($type, $anchor, $subanchor, @new_submenu) = @_;
 
-    my $found_anchor = 0;
-    my $found_subanchor = 0;
-    for (my $i = 0; $i < @{$self->{menu}}; $i+=2) {
-        my $title   = $self->{menu}->[$i];
-        my $submenu = $self->{menu}->[$i+1];
+    my @found_anchor = grep { $_->{title} eq $anchor } @{$self->{menu}};
+    croak("Anchor menu not found") unless @found_anchor;
 
-        if ($title eq $anchor) {
-            $found_anchor = 1;
-            my @old_items = @{$submenu};
-            my @new_items;
-            for my $item (@old_items) {
-                push(@new_items, $item) if $type eq 'after';
-                if ($item->{title} eq $subanchor) {
-                    $found_subanchor = 1;
-                    push(@new_items, @new_submenu);
-                }
-                push(@new_items, $item) if $type eq 'before';
+    my $found_subanchor = 0;
+
+    foreach my $found ( @found_anchor ) {
+        my $submenu = $found->{submenu};
+
+        next unless $submenu && @$submenu;
+
+        my @old_items = @{$submenu};
+        my @new_items;
+
+        for my $item (@old_items) {
+            push(@new_items, $item) if $type eq 'after';
+            if ($item->{title} eq $subanchor) {
+                $found_subanchor = 1;
+                push(@new_items, @new_submenu);
             }
-            $self->{menu}->[$i+1] = \@new_items;
+            push(@new_items, $item) if $type eq 'before';
         }
+
+        $found->{submenu} = \@new_items;
     }
-    Carp::croak("Anchor menu not found") unless $found_anchor;
-    Carp::croak("Anchor submenu not found") unless $found_subanchor;
+
+    croak("Anchor submenu not found") unless $found_subanchor;
 
     return 1;
 }
 
-
 sub getMenu
 {
-    my $self = shift;
-
-    my @menu;
-    for (my $i = 0; $i < @{$self->{menu}}; $i+=2) {
-        my $title   = $self->{menu}->[$i];
-        my $submenu = $self->{menu}->[$i+1];
-        push(@menu, { title => $title, url => '', submenu => $submenu });
-    }
-
-    return @menu;
+    return map { +{ %$_, url => '' } } @{$_[0]->{menu}};
 }
 
 1;
