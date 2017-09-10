@@ -20,24 +20,17 @@ use TestModule1;
 use TestModule2;
 use TestModule3;
 
-my $con1 = \&TestModule1::connect;
-my $con2 = \&TestModule2::connect;
-my $con3 = \&TestModule3::connect;
+changeNetHTTPSBase('Net::SSL');
 
 no warnings 'redefine';
-*TestModule1::connect = sub {
-    changeNetHTTPSBase('Net::SSL');
-    return $con1->(@_);
-};
+my $con2 = \&TestModule2::connect;
 
 *TestModule2::connect = sub {
     changeNetHTTPSBase('IO::Socket::SSL');
-    return $con2->(@_);
-};
-
-*TestModule3::connect = sub {
+    my $res = $con2->(@_);
     changeNetHTTPSBase('Net::SSL');
-    return $con3->(@_);
+
+    $res
 };
 
 use warnings 'redefine';
