@@ -2,6 +2,8 @@
 use strict;
 use warnings;
 
+use Carp qw(croak);
+
 $ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = 0;
 
 # Для всех коннектов требуется использовать какой-нибудь HTTPS-proxy
