@@ -5,17 +5,16 @@ use base 'TestCase';
 
 use MenuManager;
 
-
-sub test_return_true_on_addmenu
+sub testReturnTrueOnAddMenu
 {
     my $self = shift;
 
     my $manager = $self->_buildMenuManager();
 
-    $self->assert_num_equals(1, $manager->addMenu("My menu", [{title => "Submenu", url => 'abc'}]));
+    $self->assert($manager->addMenu("My menu", [{title => "Submenu", url => 'abc'}]), "Check menu added");
 }
 
-sub test_return_complete_menu
+sub testReturnCompleteMenu
 {
     my $self = shift;
 
@@ -37,16 +36,16 @@ sub test_return_complete_menu
     );
 }
 
-sub test_add_menu_after
+sub testAddMenuAfter
 {
     my $self = shift;
 
     my $manager = $self->_buildMenuManager();
 
     $manager->addMenu("My menu1", [{ title => "Submenu1", url => 'abc' }]);
-    $manager->addMenu("My menu2", [{ title => "Submenu2", url => 'abc' }]);
+    $manager->addMenu("My menu2", [{ title => "Submenu2", url => 'abc2' }]);
 
-    $manager->addMenuAfter("My menu1", "My menu3", [{ title => "Submenu3", url => 'abc' }]);
+    $manager->addMenuAfter("My menu1", "My menu3", [{ title => "Submenu3", url => 'abc3' }]);
 
     $self->assert_deep_equals(
         [
@@ -61,14 +60,14 @@ sub test_add_menu_after
                 title => "My menu3",
                 url => '',
                 submenu => [
-                    { title => "Submenu3", url => 'abc' }
+                    { title => "Submenu3", url => 'abc3' }
                 ]
             },
             {
                 title => "My menu2",
                 url => '',
                 submenu => [
-                    { title => "Submenu2", url => 'abc' }
+                    { title => "Submenu2", url => 'abc2' }
                 ]
             }
         ],
@@ -76,7 +75,7 @@ sub test_add_menu_after
     );
 }
 
-sub test_add_menu_before
+sub testAddMenuBefore
 {
     my $self = shift;
 
@@ -115,7 +114,7 @@ sub test_add_menu_before
     );
 }
 
-sub test_add_sub_menu_before
+sub testAddSubMenuBefore
 {
     my $self = shift;
 
@@ -141,7 +140,7 @@ sub test_add_sub_menu_before
     );
 }
 
-sub test_add_sub_menu_after
+sub testAddSubMenuAfter
 {
     my $self = shift;
 
@@ -167,7 +166,7 @@ sub test_add_sub_menu_after
     );
 }
 
-sub test_throw_on_unknown_anchor_for_addmenu
+sub testThrowOnUnkonwAnchorForAddMenu
 {
     my $self = shift;
 
@@ -180,7 +179,7 @@ sub test_throw_on_unknown_anchor_for_addmenu
     );
 }
 
-sub test_throw_on_unknown_anchor_for_addsubmenu
+sub testThrowOnUnknownAnchorForAddSubmenu
 {
     my $self = shift;
 
@@ -193,7 +192,7 @@ sub test_throw_on_unknown_anchor_for_addsubmenu
     );
 }
 
-sub test_throw_on_unknown_subanchor_for_addsubmenu
+sub testThrowOnUnknownSubanchorForAddSubmenu
 {
     my $self = shift;
 
